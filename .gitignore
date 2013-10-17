@@ -1,0 +1,11 @@
+out
+.idea
+.settings
+/crane-data-provider/*.classpath
+/crane-data-provider/.project
+*.iml
+/redis-connector/.classpath
+/redis-connector/.project
+classes
+/crane-data-collector/.classpath
+/crane-data-collector/.project
