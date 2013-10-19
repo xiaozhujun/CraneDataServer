@@ -16,6 +16,7 @@ import java.util.Set;
 
 /**
  * Created with IntelliJ IDEA.
+ * 用于对mserver进行监听
  * User: xiaozhujun
  * Date: 13-10-19
  * Time: 下午2:14
@@ -26,28 +27,39 @@ public class MServerListener implements ServletContextListener,Runnable {
     private Thread mServerListenThread;
     private String mserverDomain;
     private String mserverPort;
+    private  SocketChannel mserverSocket;
 
-public void contextInitialized(ServletContextEvent event) {
+    public void contextInitialized(ServletContextEvent event) {
+        mServerListenThread =new Thread(this);
+        mServerListenThread.start();
+    }
 
-    System.out.println("mserverDomain:"+mserverDomain);
-    System.out.println("mserverPort:"+mserverPort);
-    mServerListenThread =new Thread(this);
-    mServerListenThread.start();
-}
-
-//tomcat关闭时，关闭线程，释放端口
-        public void contextDestroyed(ServletContextEvent event) {
-            mServerListenThread.stop();
-}
+            //tomcat关闭时，关闭线程，释放端口
+    public void contextDestroyed(ServletContextEvent event) {
+        if(mserverSocket!=null)
+        {
+            if(mserverSocket.isOpen())
+            {
+                try {
+                    mserverSocket.close();
+                } catch (IOException e) {
+                    e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+                }
+            }
+        }
+        mServerListenThread.stop();
+    }
     @Override
     public void run() {
         ResourceBundle bundle = ResourceBundle.getBundle("mserver");
         if (bundle == null) {
             throw new IllegalArgumentException("[redis.properties] is not found!");
         }
+        System.out.println("mserverDomain:"+mserverDomain);
+        System.out.println("mserverPort:"+mserverPort);
         mserverDomain =bundle.getString("mserver.domain");
         mserverPort =bundle.getString("mserver.port");
-        SocketChannel socket = Dcc_client.dcc_Socket(mserverDomain, Integer.parseInt(mserverPort));
+        mserverSocket = Dcc_client.dcc_Socket(mserverDomain, Integer.parseInt(mserverPort));
 
         //数据包格式看mserver相关手册
         Dcc_msg msg = new Dcc_msg();
@@ -63,10 +75,10 @@ public void contextInitialized(ServletContextEvent event) {
         while(true)
         {
             try {
-                result = Dcc_client.dcc_msg_recv(socket, msg);
+                result = Dcc_client.dcc_msg_recv(mserverSocket, msg);
                 if(msg!=null && msg.getMsg_body()!=null && result>1)
                 {
-                    System.out.println(new String(msg.getMsg_body(),"utf-8"));
+                    //System.out.println(new String(msg.getMsg_body(),"utf-8"));
                     dealMessage(msg);
                 }
                 Thread.sleep(1000);
