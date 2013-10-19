@@ -62,6 +62,8 @@ public class MServerListener implements ServletContextListener,Runnable {
         mserverSocket = Dcc_client.dcc_Socket(mserverDomain, Integer.parseInt(mserverPort));
 
         //数据包格式看mserver相关手册
+        //一个字符串消息格式
+        //|zd000001#100#zhendong|zd000002#200#zhengdong|wd000001#50#wendu|time#2013-10-19 15:28:30
         Dcc_msg msg = new Dcc_msg();
 //		msg.setMsg_type((byte) 0x03);
 //		msg.setMsg_body("hello".getBytes());
