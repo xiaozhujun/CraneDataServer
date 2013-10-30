@@ -55,10 +55,10 @@ public class MServerListener implements ServletContextListener,Runnable {
         if (bundle == null) {
             throw new IllegalArgumentException("[redis.properties] is not found!");
         }
-        System.out.println("mserverDomain:"+mserverDomain);
-        System.out.println("mserverPort:"+mserverPort);
         mserverDomain =bundle.getString("mserver.domain");
         mserverPort =bundle.getString("mserver.port");
+        System.out.println("mserverDomain:"+mserverDomain);
+        System.out.println("mserverPort:"+mserverPort);
         mserverSocket = Dcc_client.dcc_Socket(mserverDomain, Integer.parseInt(mserverPort));
 
         //数据包格式看mserver相关手册
