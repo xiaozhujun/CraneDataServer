@@ -127,4 +127,16 @@ public class RedisConnector {
         return expire;
     }
 
+    public boolean set(String key,String value){
+       String result = jedis.set(key,value);
+       if (result.equals("OK")){
+           return true;
+       }
+        return false;
+    }
+
+    public String get(String key){
+        return jedis.get(key);
+    }
+
 }

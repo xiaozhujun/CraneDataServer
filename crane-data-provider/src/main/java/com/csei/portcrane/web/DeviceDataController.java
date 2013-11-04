@@ -1,6 +1,7 @@
 package com.csei.portcrane.web;
 
 import com.csei.portcrane.domain.Message;
+import com.csei.portcrane.service.SensorDataService;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
@@ -13,6 +14,8 @@ import com.csei.portcrane.service.DeviceDataService;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Set;
 import java.util.SortedSet;
 
@@ -21,6 +24,9 @@ import java.util.SortedSet;
 public class DeviceDataController {
     @Autowired
     private DeviceDataService service;
+
+    @Autowired
+    private SensorDataService sensorDataService;
 
     @RequestMapping(value = "/sensor/{id}.htm")
     @ResponseBody
@@ -45,6 +51,15 @@ public class DeviceDataController {
             e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
         }
         return result + ")";
+    }
+
+    @RequestMapping(value = "/sensor/data/{id}.htm")
+    @ResponseBody
+    public String getSensorDataArray(HttpServletRequest request,HttpServletResponse response,@PathVariable("id") String id){
+        ArrayList dataArray = sensorDataService.getCurrentSensorDataArray(id);
+        HashMap map = new HashMap();
+        map.put("data",dataArray);
+        return getJsonp(map,request.getParameter("callback"));
     }
 
 }

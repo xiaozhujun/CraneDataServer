@@ -5,6 +5,7 @@ import cn.bj.etung.tower.dcc.communicate.Dcc_msg;
 import com.csei.portcrane.connector.RedisConnector;
 import com.csei.portcrane.domain.Message;
 import com.csei.portcrane.mserver.message.StringInfoDecoder;
+import com.csei.portcrane.service.SensorDataService;
 
 import javax.servlet.ServletContextEvent;
 import javax.servlet.ServletContextListener;
@@ -80,8 +81,8 @@ public class MServerListener implements ServletContextListener,Runnable {
                 result = Dcc_client.dcc_msg_recv(mserverSocket, msg);
                 if(msg!=null && msg.getMsg_body()!=null && result>1)
                 {
-                    //System.out.println(new String(msg.getMsg_body(),"utf-8"));
-                    dealMessage(msg);
+                    System.out.println(new String(msg.getMsg_body(),"utf-8"));
+                    dealMessageForMongo(msg);
                 }
                 Thread.sleep(1000);
             } catch (IOException e) {
@@ -93,10 +94,21 @@ public class MServerListener implements ServletContextListener,Runnable {
         }
     }
 
+    private void dealMessageForMongo(Dcc_msg msg){
+        SensorDataService sensorDataService = new SensorDataService();
+        try {
+            String msgBody = new String(msg.getMsg_body(),"utf-8");
+            if(sensorDataService.saveMessage(msgBody)==null){
+                System.out.println("ERROR:SAVE FAILED: "+msgBody);
+            }
+        } catch (UnsupportedEncodingException e) {
+            e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+        }
+    }
+
     //消息处理方法
     private void dealMessage(Dcc_msg msg)
     {
-
         StringInfoDecoder decoder = null;
         try {
             decoder = new StringInfoDecoder(new String(msg.getMsg_body(),"utf-8"));

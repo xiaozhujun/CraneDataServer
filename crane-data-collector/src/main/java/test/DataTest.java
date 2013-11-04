@@ -21,7 +21,7 @@ public class DataTest {
         msg.setSensor("zd000001");
         msg.setTimestamp(new Date().getTime());
         List<SensorValue> values = new ArrayList<SensorValue>();
-        SensorValue value = new SensorValue("zhendong",Math.random());
+        SensorValue value = new SensorValue("zhendong",Math.random()*60);
         values.add(value);
         msg.setValues(values);
 
