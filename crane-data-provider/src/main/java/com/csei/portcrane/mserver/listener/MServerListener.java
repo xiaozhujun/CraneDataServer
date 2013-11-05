@@ -62,6 +62,8 @@ public class MServerListener implements ServletContextListener,Runnable {
         System.out.println("mserverPort:"+mserverPort);
         mserverSocket = Dcc_client.dcc_Socket(mserverDomain, Integer.parseInt(mserverPort));
 
+        String msgBuffer = "";
+
         //数据包格式看mserver相关手册
         //一个字符串消息格式
         //|zd000001#100#zhendong|zd000002#200#zhengdong|wd000001#50#wendu|time#2013-10-19 15:28:30
@@ -81,8 +83,13 @@ public class MServerListener implements ServletContextListener,Runnable {
                 result = Dcc_client.dcc_msg_recv(mserverSocket, msg);
                 if(msg!=null && msg.getMsg_body()!=null && result>1)
                 {
+                    msgBuffer +=new String(msg.getMsg_body(),"utf-8");
                     System.out.println(new String(msg.getMsg_body(),"utf-8"));
-                    dealMessageForMongo(msg);
+                    if(msgBuffer.endsWith("}]}")){
+                        dealMessageForMongo(msgBuffer);
+                        msgBuffer="";
+                    }
+
                 }
                 Thread.sleep(1000);
             } catch (IOException e) {
@@ -94,14 +101,13 @@ public class MServerListener implements ServletContextListener,Runnable {
         }
     }
 
-    private void dealMessageForMongo(Dcc_msg msg){
+    private void dealMessageForMongo(String msgBody){
         SensorDataService sensorDataService = new SensorDataService();
         try {
-            String msgBody = new String(msg.getMsg_body(),"utf-8");
             if(sensorDataService.saveMessage(msgBody)==null){
                 System.out.println("ERROR:SAVE FAILED: "+msgBody);
             }
-        } catch (UnsupportedEncodingException e) {
+        } catch (Exception e) {
             e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
         }
     }

@@ -65,6 +65,17 @@ public class MongoConnector {
         return null;
     }
 
+    public String insertDocumentObject(DBObject documentObject){
+        DB db = mongo.getDB(dbName);
+        DBCollection collection = db.getCollection(collectionName);
+        WriteResult result = collection.insert(documentObject);
+        Object objectId = documentObject.get("_id");
+        if(objectId!=null){
+            return ((ObjectId)objectId).toStringMongod();
+        }
+        return null;
+    }
+
     //获取文档对象
     public DBObject getDocument(String objectID){
         if(objectID==null){

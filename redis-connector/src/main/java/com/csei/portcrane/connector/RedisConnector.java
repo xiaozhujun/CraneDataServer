@@ -24,13 +24,18 @@ public class RedisConnector {
         config.setTestOnBorrow(Boolean.valueOf(bundle.getString("redis.pool.testOnBorrow")));
         config.setTestOnReturn(Boolean.valueOf(bundle.getString("redis.pool.testOnReturn")));
         pool = new JedisPool(config, bundle.getString("redis.ip"), Integer.valueOf(bundle.getString("redis.port")));
+        System.out.println("redis.ip: "+bundle.getString("redis.ip"));
         expire = Integer.valueOf(bundle.getString("redis.expire"));
     }
 
     private Jedis jedis;
 
     public RedisConnector() {
-        jedis = pool.getResource();
+        try{
+            jedis = pool.getResource();
+        }catch (Exception e){
+            e.printStackTrace();
+        }
     }
 
     public void destroy() {

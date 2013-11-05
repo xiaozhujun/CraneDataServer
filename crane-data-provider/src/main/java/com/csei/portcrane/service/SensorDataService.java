@@ -39,17 +39,27 @@ public class SensorDataService {
 
     //保存消息对象
     public String saveMessage(String msg){
-        DBObject dbObject = (DBObject) JSON.parse(msg);
-        String sensor = dbObject.get(resourceBundle.getString("mongo.field.sensor.id")).toString();
-        //long timestamp = new Date().getTime();
+        String objectID = "";
+        try{
+            DBObject dbObject = (DBObject) JSON.parse(msg);
+            ArrayList sensors = (ArrayList)dbObject.get("sensors");
+            DBObject curSensor;
+            for(int i=0;i<sensors.size();i++){
+                curSensor = (DBObject)sensors.get(i);
+                String sensor = curSensor.get(resourceBundle.getString("mongo.field.sensor.id")).toString();
+                //long timestamp = new Date().getTime();
 
-        String objectID = mongoConnector.insertDocument(msg);
-        if(objectID!=null){
-            if(redisConnector.set(sensor, objectID)){
-                return objectID;
+                String temp = mongoConnector.insertDocumentObject(curSensor);
+                if(objectID!=null){
+                    if(redisConnector.set(sensor, temp)){
+                        objectID+=temp + " ";
+                    }
+                }
             }
+        }catch (Exception e){
+            e.printStackTrace();
         }
-        return null;
+        return objectID;
     }
 
     //获得传感器当前最新的
