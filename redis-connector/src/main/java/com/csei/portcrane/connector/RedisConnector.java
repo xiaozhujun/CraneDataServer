@@ -28,19 +28,7 @@ public class RedisConnector {
         expire = Integer.valueOf(bundle.getString("redis.expire"));
     }
 
-    private Jedis jedis;
-
-    public RedisConnector() {
-        try{
-            jedis = pool.getResource();
-        }catch (Exception e){
-            e.printStackTrace();
-        }
-    }
-
-    public void destroy() {
-        pool.returnResource(jedis);
-    }
+    public RedisConnector() {}
 
     public void save(Message msg) {
         String sensor = msg.getSensor();
@@ -65,12 +53,21 @@ public class RedisConnector {
     }
 
     private void saveValue(String key, SensorValue sensorValue) {
-        jedis.hset(key, "type", sensorValue.getType());
-        jedis.hset(key, "value", String.valueOf(sensorValue.getValue()));
-        jedis.expire(key, expire);
+        Jedis jedis = pool.getResource();
+        try{
+            jedis.hset(key, "type", sensorValue.getType());
+            jedis.hset(key, "value", String.valueOf(sensorValue.getValue()));
+            jedis.expire(key, expire);
+        }catch (Exception e){
+            e.printStackTrace();
+        }finally {
+            pool.returnResource(jedis);
+        }
     }
 
     public Set<String> getAllSensors(){
+        Jedis jedis = pool.getResource();
+        jedis = pool.getResource();
         Set<String> result = new HashSet<String>();
         Set<String> keys = jedis.keys("*");
         Iterator<String> it = keys.iterator();
@@ -83,6 +80,7 @@ public class RedisConnector {
     }
 
     public TreeSet<Message> getMsgBySensor(String sensor) {
+        Jedis jedis = pool.getResource();
         TreeSet<Message> result = new TreeSet<Message>();
         Set<String> keys = jedis.keys(sensor + ":*");
         Set<String> timestamps = new HashSet<String>();
@@ -133,15 +131,31 @@ public class RedisConnector {
     }
 
     public boolean set(String key,String value){
-       String result = jedis.set(key,value);
-       if (result.equals("OK")){
-           return true;
-       }
+        Jedis jedis = pool.getResource();
+        try{
+            String result = jedis.set(key,value);
+            if (result.equals("OK")){
+                return true;
+            }
+        }catch (Exception e){
+            e.printStackTrace();
+        }finally {
+            pool.returnResource(jedis);
+        }
         return false;
     }
 
     public String get(String key){
-        return jedis.get(key);
+        Jedis jedis = pool.getResource();
+        String result = null;
+        try{
+            result = jedis.get(key);
+        }catch (Exception e){
+            e.printStackTrace();
+        }finally {
+            pool.returnResource(jedis);
+        }
+        return result;
     }
 
 }
