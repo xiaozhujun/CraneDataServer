@@ -74,6 +74,9 @@ public class SensorDataService {
     //获得传感器当前数据数组
     public ArrayList getCurrentSensorDataArray(String sensor){
         DBObject dbObject = getCurrentSensorData(sensor);
+        if(dbObject==null){
+            return null;
+        }
         return (ArrayList)dbObject.get(resourceBundle.getString("mongo.field.sensor.data"));
     }
 }

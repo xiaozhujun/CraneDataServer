@@ -29,6 +29,7 @@ public class MServerListener implements ServletContextListener,Runnable {
     private String mserverDomain;
     private String mserverPort;
     private  SocketChannel mserverSocket;
+    private SensorDataService sensorDataService;
 
     public void contextInitialized(ServletContextEvent event) {
         mServerListenThread =new Thread(this);
@@ -61,6 +62,7 @@ public class MServerListener implements ServletContextListener,Runnable {
         System.out.println("mserverDomain:"+mserverDomain);
         System.out.println("mserverPort:"+mserverPort);
         mserverSocket = Dcc_client.dcc_Socket(mserverDomain, Integer.parseInt(mserverPort));
+        sensorDataService = new SensorDataService();
 
         String msgBuffer = "";
 
@@ -102,7 +104,6 @@ public class MServerListener implements ServletContextListener,Runnable {
     }
 
     private void dealMessageForMongo(String msgBody){
-        SensorDataService sensorDataService = new SensorDataService();
         try {
             if(sensorDataService.saveMessage(msgBody)==null){
                 System.out.println("ERROR:SAVE FAILED: "+msgBody);
@@ -121,7 +122,6 @@ public class MServerListener implements ServletContextListener,Runnable {
             Set<Message> info = decoder.decodeAll();
             RedisConnector connector = new RedisConnector();
             connector.saveAll(info);
-            connector.destroy();
         } catch (UnsupportedEncodingException e) {
             e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
         }

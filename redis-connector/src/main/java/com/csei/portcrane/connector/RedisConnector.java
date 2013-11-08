@@ -67,14 +67,20 @@ public class RedisConnector {
 
     public Set<String> getAllSensors(){
         Jedis jedis = pool.getResource();
-        jedis = pool.getResource();
         Set<String> result = new HashSet<String>();
-        Set<String> keys = jedis.keys("*");
-        Iterator<String> it = keys.iterator();
-        while (it.hasNext()) {
-            String key = it.next();
-            String[] ss = key.split(":");
-            result.add(ss[0]);
+        try{
+            jedis = pool.getResource();
+            Set<String> keys = jedis.keys("*");
+            Iterator<String> it = keys.iterator();
+            while (it.hasNext()) {
+                String key = it.next();
+                String[] ss = key.split(":");
+                result.add(ss[0]);
+            }
+        }catch (Exception e){
+            e.printStackTrace();
+        }finally {
+            pool.returnResource(jedis);
         }
         return result;
     }
@@ -82,28 +88,35 @@ public class RedisConnector {
     public TreeSet<Message> getMsgBySensor(String sensor) {
         Jedis jedis = pool.getResource();
         TreeSet<Message> result = new TreeSet<Message>();
-        Set<String> keys = jedis.keys(sensor + ":*");
-        Set<String> timestamps = new HashSet<String>();
-        Iterator<String> it = keys.iterator();
-        while(it.hasNext()){
-            String key = it.next();
-            String[] ss = key.split(":");
-            if (timestamps.add(ss[1])) {
-                Message msg = new Message();
-                msg.setSensor(sensor);
-                msg.setTimestamp(Long.parseLong(ss[1]));
-                List<SensorValue> list = new ArrayList<SensorValue>();
-                Set<String> keys1 = jedis.keys(sensor + ":" + ss[1] + "*");
-                Iterator<String> it1 = keys1.iterator();
-                while (it1.hasNext()) {
-                    String key1 = it1.next();
-                    SensorValue sensorValue = new SensorValue(jedis.hget(key1, "type"), Double.valueOf(jedis.hget(key1, "value")));
-                    list.add(sensorValue);
+        try{
+            Set<String> keys = jedis.keys(sensor + ":*");
+            Set<String> timestamps = new HashSet<String>();
+            Iterator<String> it = keys.iterator();
+            while(it.hasNext()){
+                String key = it.next();
+                String[] ss = key.split(":");
+                if (timestamps.add(ss[1])) {
+                    Message msg = new Message();
+                    msg.setSensor(sensor);
+                    msg.setTimestamp(Long.parseLong(ss[1]));
+                    List<SensorValue> list = new ArrayList<SensorValue>();
+                    Set<String> keys1 = jedis.keys(sensor + ":" + ss[1] + "*");
+                    Iterator<String> it1 = keys1.iterator();
+                    while (it1.hasNext()) {
+                        String key1 = it1.next();
+                        SensorValue sensorValue = new SensorValue(jedis.hget(key1, "type"), Double.valueOf(jedis.hget(key1, "value")));
+                        list.add(sensorValue);
+                    }
+                    msg.setValues(list);
+                    result.add(msg);
                 }
-                msg.setValues(list);
-                result.add(msg);
             }
+        }catch(Exception e){
+            e.printStackTrace();
+        }finally {
+            pool.returnResource(jedis);
         }
+
         return result;
     }
 

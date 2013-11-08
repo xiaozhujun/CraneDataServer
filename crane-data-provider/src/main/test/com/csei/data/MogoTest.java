@@ -17,7 +17,7 @@ public class MogoTest {
         StringBuffer data = new StringBuffer("");
         Date startTime = new Date();
         for (long j=0;j<count;j++){
-            for(int i=0;i<500;i++){
+            for(int i=0;i<512;i++){
                 if(i==0){
                     data.append(Math.random()*300);
                 }else{
@@ -26,11 +26,16 @@ public class MogoTest {
 
             }
             String dataObjectJson="{sensors:[{sensorNum:1,dateType:'Vibration',time:'2013-11-05 10:29:24',data:[58,7,8,7,8,58,58,58,58,58,58,58,58,58,58,58,58,58,58,58,58,58,58,58,58,58,58,58,58,58,58,58,58,58,58,58,58,58,58,58,58,58,58,58,58,58,58,58,58,58,58,58,58,58,58,58,58,58,58,58,58,58,58,58]},{sensorNum:2,dateType:'Vibration',time:'2013-11-05 10:29:24',data:[58,8,10,8,10,58,58,58,58,58,58,58,58,58,58,58,58,58,58,58,58,58,58,58,58,58,58,58,58,58,58,58,58,58,58,58,58,58,58,58,58,58,58,58,58,58,58,58,58,58,58,58,58,58,58,58,58,58,58,58,58,58,58,58]},{sensorNum:3,dateType:'Route',time:'2013-11-05 10:29:24',data:[0.1,0.1]}]}";
-            String documentJson = "{sensors:[{sensorNum:'zd000001',dataType:'振动',time:"+new Date().getTime()+",data:["+data+"]}]}";
+            String documentJson = "{sensors:[{sensorNum:'1',dataType:'振动',time:"+new Date().getTime()+",data:["+data+"]}]}";
             SensorDataService sensorDataService = new SensorDataService();
             String result = sensorDataService.saveMessage(documentJson);
             System.out.println(j);
             data.delete(0,data.length());
+//            try {
+//                Thread.sleep(500);
+//            } catch (InterruptedException e) {
+//                e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+//            }
         }
         Date endTime = new Date();
         System.out.println("startTime: "+startTime.getTime());

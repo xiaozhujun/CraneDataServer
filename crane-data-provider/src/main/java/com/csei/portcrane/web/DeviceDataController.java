@@ -1,6 +1,8 @@
 package com.csei.portcrane.web;
 
+import com.csei.crane.data.analysis.PinYu;
 import com.csei.portcrane.domain.Message;
+import com.csei.portcrane.service.DeviceDataService;
 import com.csei.portcrane.service.SensorDataService;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -9,7 +11,6 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.ResponseBody;
-import com.csei.portcrane.service.DeviceDataService;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -60,6 +61,36 @@ public class DeviceDataController {
         HashMap map = new HashMap();
         map.put("data",dataArray);
         return getJsonp(map,request.getParameter("callback"));
+    }
+
+    @RequestMapping(value = "/sensor/data/{analysis}/{id}.htm")
+    @ResponseBody
+    public String getSensorDataArrayAnalysis(HttpServletRequest request,HttpServletResponse response,@PathVariable("id") String id,@PathVariable("analysis") String analysisType){
+        ArrayList dataArray = sensorDataService.getCurrentSensorDataArray(id);
+        float[] data = getDataArray(dataArray);
+        analysisData(data,analysisType);
+        HashMap map = new HashMap();
+        map.put("data",data);
+        return getJsonp(map,request.getParameter("callback"));
+    }
+
+    //将数组列表转换为数据对象
+    private float[] getDataArray(ArrayList dataArray){
+        if(dataArray==null){
+            return new float[0];
+        }
+        float[] result = new float[dataArray.size()];
+        for(int i=0;i<dataArray.size();i++){
+            result[i] = ((Double)dataArray.get(i)).floatValue();
+        }
+        return result;
+    }
+
+    //针对不同的数学方法进行分析
+    private void analysisData(float[] data,String analysisType){
+        if(analysisType.equals("fft")){
+            PinYu.FFT(data);
+        }
     }
 
 }
