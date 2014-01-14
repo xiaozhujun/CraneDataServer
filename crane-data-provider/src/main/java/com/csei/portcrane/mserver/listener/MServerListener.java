@@ -51,6 +51,15 @@ public class MServerListener implements ServletContextListener,Runnable {
         }
         mServerListenThread.stop();
     }
+
+    //是否是我们的imei号
+    private boolean isOurImei(String imei){
+        if(imei!=null && imei.trim().equals("240305002028307")){
+            return true;
+        }
+        return false;
+    }
+
     @Override
     public void run() {
         ResourceBundle bundle = ResourceBundle.getBundle("mserver");
@@ -83,15 +92,30 @@ public class MServerListener implements ServletContextListener,Runnable {
         {
             try {
                 result = Dcc_client.dcc_msg_recv(mserverSocket, msg);
-                if(msg!=null && msg.getMsg_body()!=null && result>1)
+                if(result>1){
+                    System.out.println(msg.getImei()+" : "+new String(msg.getMsg_body(),"utf-8"));
+                }
+
+                if(msg!=null && msg.getMsg_body()!=null && result>1 && isOurImei(msg.getImei()))
                 {
                     msgBuffer +=new String(msg.getMsg_body(),"utf-8");
-                    System.out.println(new String(msg.getMsg_body(),"utf-8"));
-                    if(msgBuffer.endsWith("}]}")){
-                        dealMessageForMongo(msgBuffer);
-                        msgBuffer="";
-                    }
 
+                    int startIndex = msgBuffer.indexOf("{sensors:[{");
+                    int endIndex = msgBuffer.indexOf("}]}",startIndex);
+                    if(endIndex>0){
+                       if(startIndex>=0&&endIndex>startIndex){
+                           String temp = msgBuffer.substring(startIndex,endIndex+3);
+                           if(temp.lastIndexOf("{sensors:[{")>1){
+                              temp=temp.substring(temp.lastIndexOf("{sensors:[{"));
+                           }
+                           msgBuffer = msgBuffer.substring(endIndex+3);
+                           System.out.println("parse: "+temp);
+                           dealMessageForMongo(temp);
+                       }else{
+                           msgBuffer = msgBuffer.substring(endIndex+3);
+                       }
+
+                    }
                 }
                 Thread.sleep(1000);
             } catch (IOException e) {
@@ -126,5 +150,7 @@ public class MServerListener implements ServletContextListener,Runnable {
             e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
         }
     }
+
+
 }
 
