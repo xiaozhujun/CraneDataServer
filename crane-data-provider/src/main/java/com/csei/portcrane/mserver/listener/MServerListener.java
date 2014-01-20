@@ -6,6 +6,7 @@ import com.csei.portcrane.connector.RedisConnector;
 import com.csei.portcrane.domain.Message;
 import com.csei.portcrane.mserver.message.StringInfoDecoder;
 import com.csei.portcrane.service.SensorDataService;
+import com.csei.portcrane.test.SocketTest;
 
 import javax.servlet.ServletContextEvent;
 import javax.servlet.ServletContextListener;
@@ -30,10 +31,14 @@ public class MServerListener implements ServletContextListener,Runnable {
     private String mserverPort;
     private  SocketChannel mserverSocket;
     private SensorDataService sensorDataService;
+    private SocketTest socketTest;
 
     public void contextInitialized(ServletContextEvent event) {
-        mServerListenThread =new Thread(this);
-        mServerListenThread.start();
+        /*mServerListenThread =new Thread(this);
+        mServerListenThread.start();*/
+
+
+
     }
 
             //tomcat关闭时，关闭线程，释放端口

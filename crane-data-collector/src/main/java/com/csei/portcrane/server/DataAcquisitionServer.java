@@ -59,7 +59,6 @@ public class DataAcquisitionServer implements Runnable {
 								Set<Message> info = decoder.decodeAll();
 								RedisConnector connector = new RedisConnector();
 								connector.saveAll(info);
-								connector.destroy();
 								System.out.println("info:"+info);
                                 socketChannel.close();
 								System.out.println("server: receiving end...");
