@@ -30,7 +30,9 @@ public class MongoConnector {
         String port = bundle.getString("mongo.port");
         try {
             mongo = new Mongo(host,Integer.parseInt(port));
+            System.out.println("mongo is initialized,host is "+host+" ,port is "+port);
         } catch (UnknownHostException e) {
+            System.out.println(e.getMessage());
             e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
         }
     }
