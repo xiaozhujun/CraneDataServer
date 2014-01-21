@@ -18,9 +18,10 @@ import java.nio.channels.Selector;
 import java.nio.channels.ServerSocketChannel;
 import java.nio.channels.SocketChannel;
 import java.util.Iterator;
+import java.util.ResourceBundle;
 import java.util.Set;
 
-public class NIOServer {
+public class NIOServer implements Runnable{
     /*标识数字*/
     private  int flag = 0;
     /*缓冲区大小*/
@@ -31,20 +32,8 @@ public class NIOServer {
     private  ByteBuffer receivebuffer = ByteBuffer.allocate(BLOCK);
     private  Selector selector;
     private SensorDataService sensorDataService;
-    public NIOServer(int port) throws IOException {
-        // 打开服务器套接字通道
-        ServerSocketChannel serverSocketChannel = ServerSocketChannel.open();
-        // 服务器配置为非阻塞
-        serverSocketChannel.configureBlocking(false);
-        // 检索与此通道关联的服务器套接字
-        ServerSocket serverSocket = serverSocketChannel.socket();
-        // 进行服务的绑定
-        serverSocket.bind(new InetSocketAddress(port));
-        // 通过open()方法找到Selector
-        selector = Selector.open();
-        // 注册到selector，等待连接
-        serverSocketChannel.register(selector, SelectionKey.OP_ACCEPT);
-        System.out.println("Server Start----8888:");
+    public NIOServer(){
+
     }
     // 监听
     public void listen() throws IOException {
@@ -62,70 +51,77 @@ public class NIOServer {
         }
     }
     // 处理请求
-    private void handleKey(SelectionKey selectionKey) throws IOException {
-        // 接受请求
-        ServerSocketChannel server = null;
-        SocketChannel client = null;
-        String receiveText = null;
-        String sendText;
-        int count=0;
-        String msgBuffer = "";
-        sensorDataService = new SensorDataService();
-        // 测试此键的通道是否已准备好接受新的套接字连接。
-        if (selectionKey.isAcceptable()) {
-            // 返回为之创建此键的通道。
-            server = (ServerSocketChannel) selectionKey.channel();
-            // 接受到此通道套接字的连接。
-            // 此方法返回的套接字通道（如果有）将处于阻塞模式。
-            client = server.accept();
-            // 配置为非阻塞
-            client.configureBlocking(false);
-            // 注册到selector，等待连接
-            client.register(selector, SelectionKey.OP_READ);
-        } else if (selectionKey.isReadable()) {
-            // 返回为之创建此键的通道。
-            client = (SocketChannel) selectionKey.channel();
-            //将缓冲区清空以备下次读取
-            receivebuffer.clear();
-            //读取服务器发送来的数据到缓冲区中
-            count = client.read(receivebuffer);
-            if (count > 0) {
-                receiveText = new String( receivebuffer.array(),0,count);
-                System.out.println("服务器端接受客户端数据--:"+receiveText);
-                client.register(selector, SelectionKey.OP_WRITE);
-                //对接受数据的处理
-                msgBuffer +=receiveText;
-                int startIndex = msgBuffer.indexOf("{sensors:[{");
-                int endIndex = msgBuffer.indexOf("}]}",startIndex);
-                if(endIndex>0){
-                    if(startIndex>=0&&endIndex>startIndex){
-                        String temp = msgBuffer.substring(startIndex,endIndex+3);
-                        if(temp.lastIndexOf("{sensors:[{")>1){
-                            temp=temp.substring(temp.lastIndexOf("{sensors:[{"));
+    private void handleKey(SelectionKey selectionKey) {
+        try{
+            // 接受请求
+            ServerSocketChannel server = null;
+            SocketChannel client = null;
+            String receiveText = null;
+            String sendText;
+            int count=0;
+            String msgBuffer = "";
+            sensorDataService = new SensorDataService();
+            // 测试此键的通道是否已准备好接受新的套接字连接。
+            if (selectionKey.isAcceptable()) {
+                // 返回为之创建此键的通道。
+                server = (ServerSocketChannel) selectionKey.channel();
+                // 接受到此通道套接字的连接。
+                // 此方法返回的套接字通道（如果有）将处于阻塞模式。
+                client = server.accept();
+                // 配置为非阻塞
+                client.configureBlocking(false);
+                // 注册到selector，等待连接
+                client.register(selector, SelectionKey.OP_READ);
+                System.out.println("socket client accept");
+            } else if (selectionKey.isReadable()) {
+                // 返回为之创建此键的通道。
+                client = (SocketChannel) selectionKey.channel();
+                //将缓冲区清空以备下次读取
+                receivebuffer.clear();
+                //读取服务器发送来的数据到缓冲区中
+                count = client.read(receivebuffer);
+                if (count > 0) {
+                    receiveText = new String( receivebuffer.array(),0,count);
+                    System.out.println("服务器端接受客户端数据--:"+receiveText);
+                    client.register(selector, SelectionKey.OP_WRITE);
+                    //对接受数据的处理
+                    msgBuffer +=receiveText;
+                    System.out.println("socket client recive: "+receiveText);
+                    int startIndex = msgBuffer.indexOf("{sensors:[{");
+                    int endIndex = msgBuffer.indexOf("}]}",startIndex);
+                    if(endIndex>0){
+                        if(startIndex>=0&&endIndex>startIndex){
+                            String temp = msgBuffer.substring(startIndex,endIndex+3);
+                            if(temp.lastIndexOf("{sensors:[{")>1){
+                                temp=temp.substring(temp.lastIndexOf("{sensors:[{"));
+                            }
+                            msgBuffer = msgBuffer.substring(endIndex+3);
+                            System.out.println("socket server parse: "+temp);
+                            dealMessageForMongo(temp);
+                        }else{
+                            msgBuffer = msgBuffer.substring(endIndex+3);
                         }
-                        msgBuffer = msgBuffer.substring(endIndex+3);
-                        System.out.println("parse: "+temp);
-                        dealMessageForMongo(temp);
-                    }else{
-                        msgBuffer = msgBuffer.substring(endIndex+3);
                     }
                 }
+            } else if (selectionKey.isWritable()) {
+                //将缓冲区清空以备下次写入
+                sendbuffer.clear();
+                // 返回为之创建此键的通道。
+                client = (SocketChannel) selectionKey.channel();
+                sendText="message from socket server--" + flag++;
+                //向缓冲区中输入数据
+                sendbuffer.put(sendText.getBytes());
+                //将缓冲区各标志复位,因为向里面put了数据标志被改变要想从中读取数据发向服务器,就要复位
+                sendbuffer.flip();
+                //输出到通道
+                client.write(sendbuffer);
+                //System.out.println("服务器端向客户端发送数据--："+sendText);
+                client.register(selector, SelectionKey.OP_READ);
             }
-        } else if (selectionKey.isWritable()) {
-            //将缓冲区清空以备下次写入
-            sendbuffer.clear();
-            // 返回为之创建此键的通道。
-            client = (SocketChannel) selectionKey.channel();
-            sendText="message from server--" + flag++;
-            //向缓冲区中输入数据
-            sendbuffer.put(sendText.getBytes());
-            //将缓冲区各标志复位,因为向里面put了数据标志被改变要想从中读取数据发向服务器,就要复位
-            sendbuffer.flip();
-            //输出到通道
-            client.write(sendbuffer);
-            //System.out.println("服务器端向客户端发送数据--："+sendText);
-            client.register(selector, SelectionKey.OP_READ);
+        }catch (Exception e){
+            e.printStackTrace();
         }
+
     }
     private void dealMessageForMongo(String msgBody){
         try {
@@ -136,14 +132,43 @@ public class NIOServer {
             e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
         }
     }
+
+    @Override
+    public void run(){
+            ResourceBundle bundle = ResourceBundle.getBundle("socketServer");
+            if (bundle == null) {
+                throw new IllegalArgumentException("[socketServer.properties] is not found!");
+            }
+            String portString =bundle.getString("server.port");
+            System.out.println("socket server listen:"+portString);
+            int port = Integer.parseInt(portString);
+            try{
+
+                // 打开服务器套接字通道
+                ServerSocketChannel serverSocketChannel = ServerSocketChannel.open();
+                // 服务器配置为非阻塞
+                serverSocketChannel.configureBlocking(false);
+                // 检索与此通道关联的服务器套接字
+                ServerSocket serverSocket = serverSocketChannel.socket();
+                // 进行服务的绑定
+                serverSocket.bind(new InetSocketAddress(port));
+                // 通过open()方法找到Selector
+                selector = Selector.open();
+                // 注册到selector，等待连接
+                serverSocketChannel.register(selector, SelectionKey.OP_ACCEPT);
+                System.out.println("socket server start----9092:");
+
+                listen();
+            }catch (Exception e){}
+        }
+
     /**
      * @param args
      * @throws IOException
      */
     public static void main(String[] args) throws IOException {
         // TODO Auto-generated method stub
-        int port = 8888;
-        NIOServer server = new NIOServer(port);
+        NIOServer server = new NIOServer();
         server.listen();
     }
 }

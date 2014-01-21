@@ -5,6 +5,7 @@ import cn.bj.etung.tower.dcc.communicate.Dcc_msg;
 import com.csei.portcrane.connector.RedisConnector;
 import com.csei.portcrane.domain.Message;
 import com.csei.portcrane.mserver.message.StringInfoDecoder;
+import com.csei.portcrane.nioserver.NIOServer;
 import com.csei.portcrane.service.SensorDataService;
 import com.csei.portcrane.test.SocketTest;
 
@@ -27,6 +28,7 @@ import java.util.Set;
 
 public class MServerListener implements ServletContextListener,Runnable {
     private Thread mServerListenThread;
+    private Thread socketServerListenThread;
     private String mserverDomain;
     private String mserverPort;
     private  SocketChannel mserverSocket;
@@ -34,10 +36,13 @@ public class MServerListener implements ServletContextListener,Runnable {
     private SocketTest socketTest;
 
     public void contextInitialized(ServletContextEvent event) {
-        /*mServerListenThread =new Thread(this);
-        mServerListenThread.start();*/
+        /**/
+        mServerListenThread =new Thread(this);
+        mServerListenThread.start();
 
-
+        NIOServer server = new NIOServer();
+        socketServerListenThread = new Thread(server);
+        socketServerListenThread.start();
 
     }
 

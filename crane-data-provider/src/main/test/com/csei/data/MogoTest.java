@@ -19,9 +19,9 @@ public class MogoTest {
         for (long j=0;j<count;j++){
             for(int i=0;i<2;i++){
                 if(i==0){
-                    data.append(Math.random()*300);
+                    data.append(Math.round(Math.random()*300));
                 }else{
-                    data.append(",").append(Math.random()*300);
+                    data.append(",").append(Math.round(Math.random()*300));
                 }
 
             }
